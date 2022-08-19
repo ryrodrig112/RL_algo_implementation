@@ -37,11 +37,14 @@ class Agent:
         if ep_perf >= self.best_perf:
             self.best_perf = ep_perf
             self.best_weights = self.current_weights
-            self.noise_amplitude = max(self.noise_amplitude / 2, 1e-6)
+            self.noise_amplitude = max(self.noise_amplitude / 1.5, 1e-6)
             if ep_perf == self.max_score:
                 self.noise_amplitude = self.noise_amplitude / 4
         else:
-            self.noise_amplitude = min(self.noise_amplitude * 2, 2)
+            if self.best_perf == self.max_score:
+                self.noise_amplitude == 1e-2
+            else:
+                self.noise_amplitude = min(self.noise_amplitude * 1.5, 2)
         self.current_weights = self.best_weights + (self.noise_amplitude * np.random.rand(*self.state_dim,
                                                                                          self.action_size))
 

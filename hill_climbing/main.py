@@ -1,28 +1,28 @@
 import gym
-import agent
+import hc_agent
+import pandas as pd
+import time
 
 env_name = "CartPole-v1"
 env = gym.make(env_name, render_mode = 'human')
 print("Observation space:", env.observation_space)
 print("Action space:", env.action_space)
 
-best_perf = 0
-attempts = 0
-
-num_trials = 100
-num_episodes = 100
+num_trials = 3
 goal_consecutive_max = 3
-num_consecutive_max = 0
 
 num_eps_in_trial = []
 trial_weights_tracker = []
 trial_noise_tracker = []
 trial_perf_tracker = []
 
-
-for trials in range(num_trials):
-    agent = agent.Agent(env)
-    for episode in range(num_episodes):
+t0 = time.time()
+for trial in range(1, num_trials+1):
+    agent = hc_agent.Agent(env)
+    episode = 0
+    num_consecutive_max = 0
+    while num_consecutive_max < goal_consecutive_max:
+        episode += 1
         ep_perf = 0
         state = env.reset()
         done = False
@@ -37,17 +37,24 @@ for trials in range(num_trials):
         agent.update_history(ep_perf)
         if ep_perf == 500:
             num_consecutive_max += 1
-            if num_consecutive_max > goal_consecutive_max:
-                break
         else:
             num_consecutive_max = 0
-        print("Attempt: {}, Performance: {}, Best Performance:{}, Consecutive 500's:{}, Noise: {}"
-              .format(episode, ep_perf, agent.best_perf, num_consecutive_max,agent.noise_amplitude))
+        print("Trial: {}: Attempt: {}, Performance: {}, Best Performance:{}, Consecutive 500's:{}, Noise: {}"
+              .format(trial, episode, ep_perf, agent.best_perf, num_consecutive_max,agent.noise_amplitude))
         agent.update_weights(ep_perf)
     num_eps_in_trial.append(episode)
     trial_weights_tracker.append(agent.weight_history)
     trial_noise_tracker.append(agent.noise_history)
-    trial_reward_tracker.append(agent.perf_history)
+    trial_perf_tracker.append(agent.perf_history)
+t1 = time.time()
+print("Time elapsed for 3 trials: {}".format(t1-t0))
+trial_df = pd.DataFrame(
+    data = {'number_of_episodes': num_eps_in_trial,
+            'noise_history': trial_noise_tracker,
+            'perf_tracker': trial_perf_tracker})
+trial_df.to_csv('trial_history.csv')
+
+
 
 
 
