@@ -1,4 +1,3 @@
-# This is a sample Python script.
 import gym
 import agent
 
@@ -12,17 +11,19 @@ state = env.reset()
 
 best_perf = 0
 ep_perf = 0
-# while best_perf < 200:
+attempts = 0
 
-for _ in range(200):
-    action = agent.get_action(state)
-    state, step_reward, done, info = env.step(action)
-    ep_perf += step_reward
+while best_perf < 200:
+    for _ in range(10):
+        action = agent.get_action(state)
+        state, step_reward, done, info = env.step(action)
+        ep_perf += step_reward
+        if done:
+            if ep_perf > best_perf:
+                best_perf = ep_perf
+            print("Attempt: {}, Performance: {}, Best Performance:{}".format(attempts, ep_perf, best_perf))
 
-if done:
-    print(ep_perf)
-    env.reset()
-    ep_perf = 0
+            env.reset()
+            ep_perf = 0
 
-# if ep_perf > best_perf:
-#     best_perf = ep_perf
+
