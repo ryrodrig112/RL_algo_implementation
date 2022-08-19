@@ -6,13 +6,10 @@ env = gym.make(env_name, render_mode = 'human')
 print("Observation space:", env.observation_space)
 print("Action space:", env.action_space)
 
-agent = agent.Agent(env)
-state = env.reset()
-
 best_perf = 0
 attempts = 0
 
-num_trials = 10000
+num_trials = 100
 num_episodes = 100
 goal_consecutive_max = 3
 num_consecutive_max = 0
@@ -23,7 +20,7 @@ trial_noise_tracker = []
 trial_perf_tracker = []
 
 
-for trials in range_num(trials):
+for trials in range(num_trials):
     agent = agent.Agent(env)
     for episode in range(num_episodes):
         ep_perf = 0
