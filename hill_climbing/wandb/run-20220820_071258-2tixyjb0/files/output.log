@@ -1,0 +1,12 @@
+/Users/ryanrodriguez/PycharmProjects/PPO/venv/lib/python3.8/site-packages/gym/core.py:329: DeprecationWarning: [33mWARN: Initializing wrapper in old step API which returns one bool instead of two. It is recommended to set `new_step_api=True` to use new step API. This will be the default behaviour in future.
+  deprecation(
+/Users/ryanrodriguez/PycharmProjects/PPO/venv/lib/python3.8/site-packages/gym/wrappers/step_api_compatibility.py:39: DeprecationWarning: [33mWARN: Initializing environment in old step API which returns one bool instead of two. It is recommended to set `new_step_api=True` to use new step API. This will be the default behaviour in future.
+  deprecation(
+Traceback (most recent call last):
+  File "/Users/ryanrodriguez/PycharmProjects/ppo/hill_climbing/main.py", line 26, in <module>
+    envs = gym.vector.SyncVectorEnv([[make_env(env_name)] for i in range(num_envs)])
+  File "/Users/ryanrodriguez/PycharmProjects/PPO/venv/lib/python3.8/site-packages/gym/vector/sync_vector_env.py", line 54, in __init__
+    self.envs = [env_fn() for env_fn in env_fns]
+  File "/Users/ryanrodriguez/PycharmProjects/PPO/venv/lib/python3.8/site-packages/gym/vector/sync_vector_env.py", line 54, in <listcomp>
+    self.envs = [env_fn() for env_fn in env_fns]
+TypeError: 'list' object is not callable

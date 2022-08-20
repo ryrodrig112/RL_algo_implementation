@@ -1,0 +1,22 @@
+{
+    "os": "macOS-12.3-arm64-arm-64bit",
+    "python": "3.8.9",
+    "heartbeatAt": "2022-08-20T10:00:34.241033",
+    "startedAt": "2022-08-20T10:00:33.687347",
+    "docker": null,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/Users/ryanrodriguez/PycharmProjects/ppo/hill_climbing/main.py",
+    "codePath": "hill_climbing/main.py",
+    "git": {
+        "remote": "https://github.com/ryrodrig112/RL_algo_implementation.git",
+        "commit": "3fe844e9ec654ed46f16076ff9cbbbc17a0586a8"
+    },
+    "email": "ryrodrig112@gmail.com",
+    "root": "/Users/ryanrodriguez/PycharmProjects/ppo",
+    "host": "Ryans-MBP.lan",
+    "username": "ryanrodriguez",
+    "executable": "/Users/ryanrodriguez/PycharmProjects/PPO/venv/bin/python"
+}

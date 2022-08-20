@@ -1,0 +1,25 @@
+2022-08-20 06:00:04,242 INFO    MainThread:27498 [wandb_setup.py:_flush():76] Configure stats pid to 27498
+2022-08-20 06:00:04,242 INFO    MainThread:27498 [wandb_setup.py:_flush():76] Loading settings from /Users/ryanrodriguez/.config/wandb/settings
+2022-08-20 06:00:04,242 INFO    MainThread:27498 [wandb_setup.py:_flush():76] Loading settings from /Users/ryanrodriguez/PycharmProjects/ppo/hill_climbing/wandb/settings
+2022-08-20 06:00:04,242 INFO    MainThread:27498 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'_require_service': 'True'}
+2022-08-20 06:00:04,242 INFO    MainThread:27498 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program_relpath': 'hill_climbing/main.py', 'program': '/Users/ryanrodriguez/PycharmProjects/ppo/hill_climbing/main.py'}
+2022-08-20 06:00:04,242 INFO    MainThread:27498 [wandb_init.py:_log_setup():461] Logging user logs to /Users/ryanrodriguez/PycharmProjects/ppo/hill_climbing/wandb/run-20220820_060004-1brp8qsp/logs/debug.log
+2022-08-20 06:00:04,242 INFO    MainThread:27498 [wandb_init.py:_log_setup():462] Logging internal logs to /Users/ryanrodriguez/PycharmProjects/ppo/hill_climbing/wandb/run-20220820_060004-1brp8qsp/logs/debug-internal.log
+2022-08-20 06:00:04,242 INFO    MainThread:27498 [wandb_init.py:init():495] calling init triggers
+2022-08-20 06:00:04,242 INFO    MainThread:27498 [wandb_init.py:init():498] wandb.init called with sweep_config: {}
+config: {}
+2022-08-20 06:00:04,243 INFO    MainThread:27498 [wandb_init.py:init():548] starting backend
+2022-08-20 06:00:04,243 INFO    MainThread:27498 [wandb_init.py:init():552] setting up manager
+2022-08-20 06:00:04,251 INFO    MainThread:27498 [backend.py:_multiprocessing_setup():97] multiprocessing start_methods=spawn,fork,forkserver, using: spawn
+2022-08-20 06:00:04,253 INFO    MainThread:27498 [wandb_init.py:init():558] backend started and connected
+2022-08-20 06:00:04,255 INFO    MainThread:27498 [wandb_init.py:init():636] updated telemetry
+2022-08-20 06:00:04,268 INFO    MainThread:27498 [wandb_init.py:init():667] communicating run to backend with 30 second timeout
+2022-08-20 06:00:04,632 INFO    MainThread:27498 [wandb_run.py:_on_init():1982] communicating current version
+2022-08-20 06:00:04,790 INFO    MainThread:27498 [wandb_run.py:_on_init():1986] got version response 
+2022-08-20 06:00:04,791 INFO    MainThread:27498 [wandb_init.py:init():700] starting run threads in backend
+2022-08-20 06:00:04,849 INFO    MainThread:27498 [wandb_run.py:_console_start():1962] atexit reg
+2022-08-20 06:00:04,849 INFO    MainThread:27498 [wandb_run.py:_redirect():1820] redirect: SettingsConsole.WRAP_RAW
+2022-08-20 06:00:04,849 INFO    MainThread:27498 [wandb_run.py:_redirect():1885] Wrapping output streams.
+2022-08-20 06:00:04,849 INFO    MainThread:27498 [wandb_run.py:_redirect():1907] Redirects installed.
+2022-08-20 06:00:04,850 INFO    MainThread:27498 [wandb_init.py:init():732] run started, returning control to user process
+2022-08-20 06:00:14,160 WARNING MsgRouterThr:27498 [router.py:message_loop():76] message_loop has been closed
