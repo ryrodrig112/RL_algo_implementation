@@ -39,7 +39,6 @@ for trial in range(1, num_trials+1):
         # Print performance
         # Update agent
         agent.update_history(ep_perf)
-        wandb.log({'num_eps': episode})
         if ep_perf == 500:
             num_consecutive_max += 1
         else:
