@@ -2,6 +2,10 @@ import gym
 import hc_agent
 import pandas as pd
 import time
+import wandb
+
+wandb.login()
+wandb.init(project = 'hill_climbing_agent')
 
 env_name = "CartPole-v1"
 env = gym.make(env_name, render_mode = 'human')
@@ -35,6 +39,7 @@ for trial in range(1, num_trials+1):
         # Print performance
         # Update agent
         agent.update_history(ep_perf)
+        wandb.log({'num_eps': episode})
         if ep_perf == 500:
             num_consecutive_max += 1
         else:
