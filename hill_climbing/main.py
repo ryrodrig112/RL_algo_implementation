@@ -16,33 +16,33 @@ def make_env(gym_id, seed):
     return thunk
 
 
-if __name__ == "__main__":
-    gym_id = "CartPole-v1"
-    num_envs = 6
-    seed = 1
+# set global params - could be in args(?)
+gym_id = "CartPole-v1"
+num_envs = 6
+seed = 1
 
+if __name__ == "__main__":
     envs = gym.vector.SyncVectorEnv(
         [make_env(gym_id, seed + i) for i in range(num_envs)]
     )
-    envs.reset()
+    agent = hc_agent.Agent(envs, gym_id)
+    states = envs.reset()
     assert isinstance(envs.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
-    print('envs.observations.shape: ', envs.observations.shape)
-    print('envs.single_action_space.n: ', envs.single_action_space.n)
+    assert envs.observation_space.shape[0] == num_envs
+    print('Num envs: ', num_envs)
+    print('Env input size: ', envs.observation_space.shape[1])
+    print('Env action space size: ', envs.single_action_space.n)
 
     for step in range(200):
-        actions = envs.action_space.sample()
-        observations, rewards, dones, infos = envs.step(actions)
+        actions = agent.get_action(states)
+        states, rewards, dones, infos = envs.step(actions)
 
-    # print('step info:')
-    # print('observations:', observations)
-    # print('rewards:', rewards)
-    # print('dones:', dones)
-    # print('infos:', infos)
+        print(states)
 
-        if infos:
-            for env in range(len(infos['episode'])):
-                if infos['episode'][env]: #nonterminal envs are None, while terminal environments are stored in the information wrapper
-                    print(f"step: {step}: , env: {env}, episodic return: {infos['episode'][env]['r']}")
+        # if infos:
+        #     for env in range(len(infos['episode'])):
+        #         if infos['episode'][env]: #nonterminal envs are None, while terminal environments are stored in the information wrapper
+        #             print(f"step: {step}: , env: {env}, episodic return: {infos['episode'][env]['r']}")
 
 
 

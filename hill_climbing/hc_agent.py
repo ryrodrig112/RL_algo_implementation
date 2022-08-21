@@ -4,9 +4,12 @@ import numpy as np
 
 
 class Agent:
-    def __init__(self, env):
-        self.state_dim = env.observation_space.shape
-        self.action_size = env.action_space.n
+    def __init__(self, envs, gym_id):
+        self.gym_id = gym_id
+        self.state_dim = envs.observation_space.shape
+        self.num_envs = envs.observation_space.shape[0]
+        self.num_inputs = self.state_dim[1]
+        self.action_size = envs.single_action_space.n
         self.noise_amplitude = 1e-2
         self.init_model()
         self.max_score = 500
@@ -14,15 +17,25 @@ class Agent:
         self.noise_history = []
         self.weight_history = []
 
+    def show(self):
+        print(f"Gym type: {self.gym_id}")
+        print(f"Num envs: {self.num_envs}")
+        print(f"Num inputs: {self.num_inputs}")
+        print(f"Num potential actions: {self.action_size}")
+        print(f"Max Possible Score: {self.max_score}")
+        print(f"Max Best Performance: {self.best_perf}")
+
+
     def init_model(self):
-        self.current_weights = 1e-4 * np.random.rand(*self.state_dim, self.action_size)
+        self.current_weights = 1e-4 * np.random.rand(self.num_inputs, self.action_size)
         self.best_weights = self.current_weights
         self.best_perf = -np.Inf
 
-    def get_action(self, state):
-        expectation_vector = state @ self.current_weights
-        action = np.argmax(expectation_vector)
-        return action
+    def get_action(self, states):
+        expectation_vectors = [state @ self.current_weights for state in states]
+        actions = [np.argmax(vector) for vector in expectation_vectors]
+        return actions
+
 
     def update_history(self, ep_perf):
         self.noise_history.append(self.noise_amplitude)
@@ -45,6 +58,6 @@ class Agent:
                 self.noise_amplitude == 1e-2
             else:
                 self.noise_amplitude = min(self.noise_amplitude * 1.5, 2)
-        self.current_weights = self.best_weights + (self.noise_amplitude * np.random.rand(*self.state_dim,
+        self.current_weights = self.best_weights + (self.noise_amplitude * np.random.rand(*self.num_inputs,
                                                                                          self.action_size))
 
