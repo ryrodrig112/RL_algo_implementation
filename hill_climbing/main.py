@@ -13,6 +13,7 @@ def make_env(gym_id, seed):
         env.action_space.seed(seed)
         env.observation_space.seed(seed)
         return env
+
     return thunk
 
 
@@ -22,6 +23,7 @@ num_envs = 6
 seed = 1
 
 if __name__ == "__main__":
+
     envs = gym.vector.SyncVectorEnv(
         [make_env(gym_id, seed + i) for i in range(num_envs)]
     )
@@ -32,50 +34,65 @@ if __name__ == "__main__":
     print('Num envs: ', num_envs)
     print('Env input size: ', envs.observation_space.shape[1])
     print('Env action space size: ', envs.single_action_space.n)
+    print('')
+    episodes_finished = 0
+    global_step = 0
+    completions = 0
 
-    for step in range(200):
+    while agent.last_five_mean_perf < 500:
+        global_step += 1
+        initial_states = states
         actions = agent.get_action(states)
         states, rewards, dones, infos = envs.step(actions)
+        for state in range(initial_states.shape[0]): #check to make sure no actions in any env are just duplicating the previous state
+            assert not (initial_states[state] == states[state]).all()
 
-        print(states)
+        if infos:
+            for env in range(len(infos['episode'])):
+                if infos['episode'][env]: # non terminal envs are None, while terminal environments are stored in the information wrapper
+                    episodes_finished +=1
+                    ep_perf = infos['episode'][env]['r']
+                    assert ep_perf <= global_step
 
-        # if infos:
-        #     for env in range(len(infos['episode'])):
-        #         if infos['episode'][env]: #nonterminal envs are None, while terminal environments are stored in the information wrapper
-        #             print(f"step: {step}: , env: {env}, episodic return: {infos['episode'][env]['r']}")
+                    agent.update_weights(ep_perf)
+                    agent.update_history(ep_perf,episodes_finished, global_step)
+    print(f"Tuning Completed - {episodes_finished} required")
+    tuning_steps = episodes_finished
 
+    print('Running Additional Eps')
+    additional_eps = 0
+    while additional_eps < tuning_steps/3: # these are just steps still lol
+        global_step += 1
+        initial_states = states
+        actions = agent.get_action(states)
+        states, rewards, dones, infos = envs.step(actions)
+        for state in range(initial_states.shape[
+                               0]):  # check to make sure no actions in any env are just duplicating the previous state
+            assert not (initial_states[state] == states[state]).all()
 
+        if infos:
+            for env in range(len(infos['episode'])):
+                if infos['episode'][env]:
+                    # non terminal envs are None, while terminal environments are stored in the information wrapper
+                    episodes_finished += 1
+                    additional_eps += 1
+                    ep_perf = infos['episode'][env]['r']
+                    assert ep_perf <= global_step
 
+                    agent.update_weights(ep_perf)
+                    agent.update_history(ep_perf, episodes_finished, global_step)
 
-# print("Observation space:", env.observation_space)
-# print("Action space:", env.action_space)
-# t0 = time.time()
-#
-# while num_consecutive_max < goal_consecutive_max:
-#     episode += 1
-#     ep_perf = 0
-#     state = env.reset()
-#     done = False
-#     while not done:  # agent applies policy to environment step, takes next step, until episode ends
-#         action = agent.get_action(state)
-#         state, step_reward, done, info = env.step(action)
-#         ep_perf += step_reward
-#     # Once the episode ends...
-#     # Update tracking metrics (perfs, best_perf, num_consecutive_max)
-#     # Print performance
-#     # Update agent
-#     agent.update_history(ep_perf)
-#     if ep_perf == 500:
-#         num_consecutive_max += 1
-#     else:
-#         num_consecutive_max = 0
-#     print("Trial: {}: Attempt: {}, Performance: {}, Best Performance:{}, Consecutive 500's:{}, Noise: {}"
-#           .format(trial, episode, ep_perf, agent.best_perf, num_consecutive_max, agent.noise_amplitude))
-#     agent.update_weights(ep_perf)
-# t1 = time.time()
-# print("Time elapsed for 3 trials: {}".format(t1 - t0))
-# trial_df = pd.DataFrame(
-#     data={'number_of_episodes': num_eps_in_trial,
-#           'noise_history': trial_noise_tracker,
-#           'perf_tracker': trial_perf_tracker})
-# trial_df.to_csv('trial_history.csv')
+    print('')
+    agent.show()
+    print('')
+    print(f"Steps required to converge: {global_step}")
+    print(f"Episodes required to converge: {episodes_finished}")
+
+    trial_df = pd.DataFrame(
+        data={'number_of_episodes': agent.episode_history,
+              'weight_history' : agent.weight_history,
+              'noise_history': agent.noise_history,
+              'number_of_steps': agent.step_history,
+              'perf_tracker': agent.perf_history})
+    trial_df.to_csv('trial_history.csv')
+
