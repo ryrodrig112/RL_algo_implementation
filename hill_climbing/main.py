@@ -4,16 +4,34 @@ import pandas as pd
 import numpy as np
 
 
+def make_env(gym_id, seed):
+    def thunk():
+        env = gym.make(gym_id)
+        env = gym.wrappers.RecordEpisodeStatistics(env)
+
+        env.seed(seed)
+        env.action_space.seed(seed)
+        env.observation_space.seed(seed)
+        return env
+    return thunk
+
+
 if __name__ == "__main__":
-    envs = gym.vector.make("CartPole-v1", num_envs=3)
+    gym_id = "CartPole-v1"
+    num_envs = 6
+    seed = 1
+
+    envs = gym.vector.SyncVectorEnv(
+        [make_env(gym_id, seed + i) for i in range(num_envs)]
+    )
     envs.reset()
-    actions = np.array([1, 0, 1])
+    assert isinstance(envs.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
+    print('envs.observations.shape: ', envs.observations.shape)
+    print('envs.single_action_space.n: ', envs.single_action_space.n)
+
+    actions = envs.action_space.sample()
     observations, rewards, dones, infos = envs.step(actions)
 
-    print("observations: {}".format(observations))
-    print("rewards: {}".format(rewards))
-    print("dones: {}".format(dones))
-    print("infos: {}".format(infos))
 
 
 # print("Observation space:", env.observation_space)
