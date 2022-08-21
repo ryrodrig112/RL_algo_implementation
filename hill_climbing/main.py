@@ -29,8 +29,21 @@ if __name__ == "__main__":
     print('envs.observations.shape: ', envs.observations.shape)
     print('envs.single_action_space.n: ', envs.single_action_space.n)
 
-    actions = envs.action_space.sample()
-    observations, rewards, dones, infos = envs.step(actions)
+    for step in range(200):
+        actions = envs.action_space.sample()
+        observations, rewards, dones, infos = envs.step(actions)
+
+    # print('step info:')
+    # print('observations:', observations)
+    # print('rewards:', rewards)
+    # print('dones:', dones)
+    # print('infos:', infos)
+
+        if infos:
+            for env in range(len(infos['episode'])):
+                if infos['episode'][env]: #nonterminal envs are None, while terminal environments are stored in the information wrapper
+                    print(f"step: {step}: , env: {env}, episodic return: {infos['episode'][env]['r']}")
+
 
 
 
