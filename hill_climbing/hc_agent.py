@@ -6,11 +6,14 @@ import numpy as np
 class Agent:
     def __init__(self, gym_id):
         self.gym_id = gym_id
-        self.state_dim = envs.observation_space.shape
-        self.num_envs = envs.observation_space.shape[0]
-        self.num_inputs = self.state_dim[1]
-        self.action_size = envs.single_action_space.n
         self.max_score = 500
+        self.noise_history = []
+        self.weight_history = []
+        self.perf_history = []
+        self.episode_history = []
+        self.step_history = []
+        self.last_five_mean_perf = 0
+        self.init_model()
 
     def show(self):
         print(f"Gym type: {self.gym_id}")
@@ -19,6 +22,16 @@ class Agent:
         print(f"Num potential actions: {self.action_size}")
         print(f"Max Possible Score: {self.max_score}")
         print(f"Best Performance: {self.best_perf}")
+
+    def init_model(self):
+        self.current_weights = 1e-4 * np.random.rand(self.num_inputs, self.action_size)
+        self.noise_amplitude = 1e-2
+        self.best_weights = self.current_weights
+        self.best_perf = -np.Inf
+        self.eps_since_restart = 0
+
+    def set_weights(self, weights):
+        self.current_weights = weights
 
     def update_history(self, ep_perf, episode, global_step):
         self.noise_history.append(self.noise_amplitude)
@@ -30,21 +43,23 @@ class Agent:
             if len(self.perf_history) > 5:
                 self.last_five_mean_perf = np.mean(self.perf_history[-5:])
 
+    def get_optimal_weights(self):
+        max_indices = []
+        for i in range(len(self.perf_history)):
+            if self.perf_history[i] == self.max_score:
+                max_indices.append(i)
+        best_weights = [self.weight_history[i] for i in max_indices]
+        optimal_weights = np.mean(best_weights, axis=0)
+        return optimal_weights
+
 
 class VectorAgent(Agent):
     def __init__(self, envs, gym_id):
-        self.gym_id = gym_id
         self.state_dim = envs.observation_space.shape
         self.num_envs = envs.observation_space.shape[0]
         self.num_inputs = self.state_dim[1]
         self.action_size = envs.single_action_space.n
-
-    def init_model(self):
-        self.current_weights = 1e-4 * np.random.rand(self.num_inputs, self.action_size)
-        self.noise_amplitude = 1e-2
-        self.best_weights = self.current_weights
-        self.best_perf = -np.Inf
-        self.eps_since_restart = 0
+        Agent.__init__(self, gym_id)
 
     def get_action(self, states):
         expectation_vectors = [state @ self.current_weights for state in states]
@@ -69,7 +84,9 @@ class VectorAgent(Agent):
 class SingleAgent(Agent):
     def __init__(self, env, gym_id):
         self.state_dim = env.observation_space.shape
-        self.action_size = envs.single_action_space.n
+        self.num_inputs = env.observation_space.shape[0]
+        self.action_size = env.action_space.n
+        Agent.__init__(self, gym_id)
 
     def get_action(self, state):
         expectation_vectors = state @ self.current_weights
@@ -90,11 +107,4 @@ class SingleAgent(Agent):
         self.current_weights = self.best_weights + (self.noise_amplitude * np.random.rand(self.num_inputs,
                                                                                  self.action_size))
 
-    def get_optimal_weights(self):
-        maxes = []
-        for i in range(len(self.perf_history)):
-            if self.best_perf[i] == self.max_score:
-                maxes.append(i)
-        best_weights = self.perf_history([maxes])
-        optimal_weights = np.mean(best_weights)
-        return optimal_weights
+
