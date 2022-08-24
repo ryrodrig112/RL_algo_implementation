@@ -1,33 +1,25 @@
 import gym
+import environments
 import hc_agent
 import pandas as pd
 import numpy as np
+import json
 
+# Define Parameters
+with open("../params.json", "r") as jsonfile:
+    params = json.load(jsonfile)
+    print("Read successful")
 
-def make_env(gym_id, seed):
-    def thunk():
-        env = gym.make(gym_id)
-        env = gym.wrappers.RecordEpisodeStatistics(env)
-
-        env.seed(seed)
-        env.action_space.seed(seed)
-        env.observation_space.seed(seed)
-        return env
-
-    return thunk
-
-
-# set global params - could be in args(?)
-gym_id = "CartPole-v1"
-num_envs = 6
-seed = 1
+gym_id = params['training_params']['gym_id']  # Training Params
+num_envs = params['training_params']['num_envs']
+num_additional_train_eps = params['training_params']['additional_eps']
+num_test_episodes = params['test_params']['num_eps'] # Test Params
 
 if __name__ == "__main__":
-
     envs = gym.vector.SyncVectorEnv(
-        [make_env(gym_id, seed + i) for i in range(num_envs)]
+        [environments.make_env(gym_id) for i in range(num_envs)]
     )
-    agent = hc_agent.VectorAgent(envs, gym_id)
+    training_agent = hc_agent.VectorAgent(envs, gym_id)
     states = envs.reset()
     assert isinstance(envs.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
     assert envs.observation_space.shape[0] == num_envs
@@ -37,12 +29,11 @@ if __name__ == "__main__":
     print('')
     episodes_finished = 0
     global_step = 0
-    completions = 0
 
-    while agent.last_five_mean_perf < 500:
+    while training_agent.last_five_mean_perf < 500:
         global_step += 1
         initial_states = states
-        actions = agent.get_action(states)
+        actions = training_agent.get_action(states)
         states, rewards, dones, infos = envs.step(actions)
         for state in range(initial_states.shape[0]): #check to make sure no actions in any env are just duplicating the previous state
             assert not (initial_states[state] == states[state]).all()
@@ -54,71 +45,77 @@ if __name__ == "__main__":
                     ep_perf = infos['episode'][env]['r']
                     assert ep_perf <= global_step
 
-                    agent.update_weights(ep_perf)
-                    agent.update_history(ep_perf,episodes_finished, global_step)
-    print(f"Tuning Completed - {episodes_finished} required")
-    # print('Running Additional Eps')
-    # additional_eps = 0
-    # while additional_eps < tuning_steps/3: # these are just steps still lol
-    #     global_step += 1
-    #     initial_states = states
-    #     actions = agent.get_action(states)
-    #     states, rewards, dones, infos = envs.step(actions)
-    #     for state in range(initial_states.shape[
-    #                            0]):  # check to make sure no actions in any env are just duplicating the previous state
-    #         assert not (initial_states[state] == states[state]).all()
-    #
-    #     if infos:
-    #         for env in range(len(infos['episode'])):
-    #             if infos['episode'][env]:
-    #                 # non terminal envs are None, while terminal environments are stored in the information wrapper
-    #                 episodes_finished += 1
-    #                 additional_eps += 1
-    #                 ep_perf = infos['episode'][env]['r']
-    #                 assert ep_perf <= global_step
-    #
-    #                 agent.update_weights(ep_perf)
-    #                 agent.update_history(ep_perf, episodes_finished, global_step)
+                    training_agent.update_weights(ep_perf)
+                    training_agent.update_history(ep_perf,episodes_finished, global_step)
+
+    tuning_eps = episodes_finished
+    print(f"Initial Tuning Completed: {tuning_eps} eps required")
+    print('Running Additional Eps')
+    additional_eps = 0
+
+    while additional_eps < num_additional_train_eps:
+        global_step += 1
+        initial_states = states
+        actions = training_agent.get_action(states)
+        states, rewards, dones, infos = envs.step(actions)
+        for state in range(initial_states.shape[
+                               0]):  # check to make sure no actions in any env are just duplicating the previous state
+            assert not (initial_states[state] == states[state]).all()
+        if infos:
+            for env in range(len(infos['episode'])):
+                if infos['episode'][env]:
+                    # non terminal envs are None, while terminal environments are stored in the information wrapper
+                    episodes_finished += 1 # includes pre-convergence eps
+                    additional_eps += 1 # only includes additional episodes
+                    ep_perf = infos['episode'][env]['r']
+                    assert ep_perf <= global_step
+                    training_agent.update_weights(ep_perf)
+                    training_agent.update_history(ep_perf, episodes_finished, global_step)
 
     print('')
-    agent.show()
-    print('')
-    print(f"Steps required to converge: {global_step}")
-    print(f"Episodes required to converge: {episodes_finished}")
+    print('Training Complete')
+    print(f"Total Training Episodes: {episodes_finished}")
 
     train_df = pd.DataFrame(
-        data={'number_of_episodes': agent.episode_history,
-              'weight_history' : agent.weight_history,
-              'noise_history': agent.noise_history,
-              'number_of_steps': agent.step_history,
-              'perf_tracker': agent.perf_history})
-    train_df.to_csv('trial_history.csv')
+        data={'number_of_episodes': training_agent.episode_history,
+              'weight_history' : training_agent.weight_history,
+              'noise_history': training_agent.noise_history,
+              'number_of_steps': training_agent.step_history,
+              'perf_tracker': training_agent.perf_history})
+    train_df.to_csv('train_df.csv', index=False)
 
-
-
-    print("Begin Testing")
     # Test Trained Agent
-    test_episodes = 0
+    print("Begin Testing")
+    test_weights = training_agent.get_optimal_weights()
+    test_episode = 0
     env = gym.make(gym_id)
     env = gym.wrappers.RecordEpisodeStatistics(env)
-    # env = gym.wrappers.RecordVideo
-    agent = hc_agent.SingleAgent(""
-                                 "")
+    test_agent = hc_agent.SingleAgent(env, gym_id)
+    test_agent.set_weights(test_weights)
     state = env.reset()
     reward_tracker = []
-    while test_episodes < 100:
-        expectation_vector = state @ optimal_weights
-        action = np.argmax(expectation_vector)
+    while test_episode < num_test_episodes:
+        action = test_agent.get_action(state)
         state, reward, done, info = env.step(action)
         if done:
             env.reset()
-            test_episodes += 1
+            test_episode += 1
             episode_reward = info['episode']['r']
             reward_tracker.append(episode_reward)
 
-    success_pct = sum([ep == 500 for ep in reward_tracker])
-    print(reward_tracker[:20])
-    print(success_pct)
+    success_tracker = [ep_perf == 500 for ep_perf in reward_tracker]
+    success_pct = (sum(success_tracker)/num_test_episodes) * 100
+    print(f"Agent Success Ratio: {success_pct}%")
+
+    test_df = pd.DataFrame(
+        data={'episode': np.arange(1, num_test_episodes+1),
+              'perf_tracker': reward_tracker,
+              'success_tracker': success_tracker
+              })
+    
+    test_df.to_csv('test_df.csv', index=False)
+
+
 
 
 
